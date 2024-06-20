@@ -11,7 +11,6 @@
 #include <cstdarg>
 #include <ctime>
 #include <string>
-#include <sys/syslimits.h>
 
 #define error(...) errorf(__FILE__, __LINE__, __VA_ARGS__)
 #define assertf(expr, ...)                                  \
