@@ -1,5 +1,7 @@
 #include "header/bst.hpp"
 #include "header/utils.hpp"
+#include <cmath>
+#include <iostream>
 
 extern Util util;
 Util util;

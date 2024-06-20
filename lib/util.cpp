@@ -1,7 +1,10 @@
 #include "../header/utils.hpp"
 #include "../header/bst.hpp"
+#include <__iterator/access.h>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <string>
 #include <strings.h>
 
 extern const Color red;
@@ -374,7 +377,7 @@ void Util::draw_button(const char * text, const int x, const int y, const int w,
         renderer,
         &rect
     );
-    write(text, x + 2, y, color);
+    write(text, x + 2, y, &white);
 }
 void Util::draw_button(const char * text, const int x, const int y, const int w, const int h, const Color * color) {    
     if (!color) {
@@ -395,7 +398,7 @@ void Util::draw_button(const char * text, const int x, const int y, const int w,
         renderer,
         &rect
     );
-    write(text, x + 2, y, color);
+    write(text, x + 2, y, &black);
 }
 void Util::refresh(void) {
     bool done = false;
@@ -507,17 +510,8 @@ void Util::refresh(void) {
             else if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
                 switch (event.key.keysym.sym) {
                     case SDLK_UP:
-                    {
-                    } break;
-
                     case SDLK_DOWN:
-                    {
-                    } break;
-
                     case SDLK_LEFT:
-                    {
-                    } break;
-
                     case SDLK_RIGHT:
                     {
                     } break;
@@ -539,20 +533,55 @@ void Util::refresh(void) {
 
                             case TreeStatus::INSERT:
                             {
+                                char * endptr;
+                                int val = (int) std::strtol(buf, &endptr, 10);
+                                if (endptr == buf || *endptr != '\0') {
+                                    success = false;
+                                }
+                                else {
+                                    tree.insert(val);
+                                    success = true;
+                                }
+                                finished = true;
                             } break;
 
                             case TreeStatus::DELETE:
                             {
+                                char * endptr;
+                                int val = (int) std::strtol(buf, &endptr, 10);
+                                if (endptr == buf || *endptr != '\0') {
+                                    success = false;
+                                }
+                                else {
+                                    if (tree.search(val)) {
+                                        tree.remove(val);
+                                        success = true;
+                                    }
+                                    else {
+                                        success = false;
+                                    }
+                                }
+                                finished = true;
                             } break;
 
                             case TreeStatus::HASVAL:
                             {
+                                char * endptr;
+                                int val = (int) std::strtol(buf, &endptr, 10);
+                                if (endptr == buf || *endptr != '\0') {
+                                    success = false;
+                                }
+                                else {
+                                    success = tree.search(val);
+                                }
+                                finished = true;
                             } break;
 
                             default:
                             {
                             } break;
                         }
+                        bzero(buf, sizeof(buf));
                     } break;
 
                     case SDLK_SPACE:
@@ -565,6 +594,10 @@ void Util::refresh(void) {
 
                     case SDLK_BACKSPACE:
                     {
+                        int len = std::strlen(buf);
+                        if (len > 0) {
+                            buf[len - 1] = '\0';
+                        }
                     } break;
 
                     case SDLK_LCTRL:
@@ -601,23 +634,71 @@ void Util::refresh(void) {
                 }
             }
         }
+
         clear_screen();
 
         switch (status) {
             case TreeStatus::INIT:
             {
+                const char * s = "Please enter an integer for the root:";
+                write(s, 20, 20);
+            } break;
+
+            case TreeStatus::PROC:
+            {
+                const char * s = "Please click one of the buttons below.";
+                write(s, 20, 20);
             } break;
 
             case TreeStatus::INSERT:
             {
+                const char * s = "Please enter the integer you wish to insert:";
+                write(s, 20, 20);
+                if (!finished) {
+                    break;
+                }
+                if (success) {
+                    const char * sucmsg = "Insertion succeeded!";
+                    write(sucmsg, 20, 50);
+                }
+                else {
+                    const char * errmsg = "Insertion failed!";
+                    write(errmsg, 20, 50, &red);
+                }
             } break;
 
             case TreeStatus::DELETE:
             {
+                const char * s = "Please enter the integer you wish to delete:";
+                write(s, 20, 20);
+                if (!finished) {
+                    break;
+                }
+                if (success) {
+                    const char * sucmsg = "Deletion succeeded!";
+                    write(sucmsg, 20, 50);
+                }
+                else {
+                    const char * errmsg = "Deletion failed!";
+                    write(errmsg, 20, 50, &red);
+                }
             } break;
 
             case TreeStatus::HASVAL:
             {
+                const char * s = "Please enter the integer you wish to check in the tree:";
+                write(s, 20, 20);
+                if (!finished) {
+                    break;
+                }
+                if (success) {
+                    const char * sucmsg = "Integer exists!";
+                    write(sucmsg, 20, 50);
+                }
+                else {
+                    const char * errmsg = "Integer missing!";
+                    write(errmsg, 20, 50, &red);
+                }
             } break;
 
             default:
@@ -625,7 +706,9 @@ void Util::refresh(void) {
             } break;
         }
 
-        write(buf, 50, 80);
+        if (buf[0] != '\0') {
+            write(buf, 50, 80);
+        }
         draw_button("insert", INSERT_BUTTON_X, INSERT_BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, &insert_color);
         draw_button("delete", DELETE_BUTTON_X, DELETE_BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, &delete_color);
         draw_button("contain", CONTAIN_BUTTON_X, CONTAIN_BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, &contain_color);

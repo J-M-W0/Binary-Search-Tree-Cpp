@@ -52,7 +52,6 @@ enum class ButtonStatus {
     HASVAL,
     REFRESH,
     QUIT,
-    COUNT,
 };
 enum class TreeStatus {
     INIT,
@@ -60,7 +59,6 @@ enum class TreeStatus {
     INSERT,
     DELETE,
     HASVAL,
-    COUNT,
 };
 
 

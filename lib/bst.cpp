@@ -1,11 +1,14 @@
 #include "../header/bst.hpp"
 #include <cmath>
-#include <cstdio>
-#include <ios>
-#include <iostream>
 #include <optional>
 #include <queue>
 #include <string>
+#include <iostream>
+
+#define RADIUS 25
+
+extern const int XDISTANCE;
+extern const int YDISTANCE;
 
 extern Util util;
 
@@ -13,7 +16,52 @@ static Point * distance_array(const int maxdep, const int x, const int y) {
     int cnt = std::pow(2, maxdep + 1) - 1;
     Point * arr = new Point[cnt];
     assertf(arr != nullptr, "");
+
+    int depth = maxdep;
+    int nodes = std::pow(2, depth);
+    double deviation = 0.5;
+    int factor  = 1;
+    int factor2 = 1;
+    while (depth >= 0) {
+        int beginX;
+        if (depth == maxdep) {
+            beginX = x;
+        }
+        else {
+            beginX = x - XDISTANCE * deviation;
+        }
+
+        for (int i = nodes; i > 0; i--) {
+            cnt--;
+            arr[cnt] = {
+                beginX - XDISTANCE * factor2 * (nodes - i),
+                y - YDISTANCE * (maxdep - depth)
+            };
+        }
+
+        
+        if (depth == maxdep) {
+            depth--;
+            nodes = std::pow(2, depth);
+            factor2 *= 2;
+            continue;
+        }
+
+        depth--;
+        nodes = std::pow(2, depth);
+        factor2 *= 2;
+        deviation += factor;
+        factor *= 2;
+    }
     return arr;
+}
+
+static TreeNode * NodeFindMin(TreeNode * node) {
+    assertf(node!=nullptr, "");
+    while (node->left) {
+        node = node->left;
+    }
+    return node;
 }
 
 TreeNode::TreeNode(int v) : val(v), left(nullptr), right(nullptr)
@@ -86,22 +134,24 @@ TreeNode * Tree::remove(TreeNode * node, int val) {
         // val == node->val
         if (node->is_leaf()) {
             delete node;
-            node = nullptr;
+            return nullptr;
         }
         else if (node->left == nullptr) {
-            int rval = node->right->val;
-            node->val = rval;
-            node->right = remove(node->right, rval);
+            TreeNode * temp = node;
+            node = node->right;
+            temp->right = nullptr;
+            delete temp;
         }
         else if (node->right == nullptr) {
-            int lval = node->left->val;
-            node->val = lval;
-            node->left = remove(node->left, lval);
+            TreeNode * temp = node;
+            node = node->left;
+            temp->left = nullptr;
+            delete temp;
         }
         else {
-            int rval = node->right->val;
-            node->val = rval;
-            node->right = remove(node->right, rval);
+            TreeNode * temp = NodeFindMin(node->right);
+            node->val = temp->val;
+            node->right = remove(node->right, temp->val);
         }
     }
     return node;
@@ -110,10 +160,10 @@ int Tree::depth(TreeNode * node) const {
     if (node->is_leaf()) {
         return 0;
     }
-    if (!node->left) {
+    if (node->left == nullptr) {
         return depth(node->right) + 1;
     }
-    if (!node->right) {
+    if (node->right == nullptr) {
         return depth(node->left) + 1;
     }
     return std::max(depth(node->left), depth(node->right)) + 1;
@@ -127,9 +177,6 @@ void Tree::in_order_traversal(TreeNode * node) const {
     in_order_traversal(node->right);
 }
 void Tree::breadth_first_traversal(TreeNode * node, const int x, const int y) const {
-    if (!node) {
-        return;
-    }
     int dep = depth(node);
     if (dep == 0) {
         node->render(x, y);
@@ -175,7 +222,7 @@ void Tree::breadth_first_traversal(TreeNode * node, const int x, const int y) co
         if (!vals[i]) {
             continue;
         }
-        util.draw_circle(arr[i].x, arr[i].y, 25);
+        util.draw_circle(arr[i].x, arr[i].y, RADIUS);
         util.write(std::to_string(vals[i].value()).c_str(), arr[i].x - 10, arr[i].y - 10);
         int idxleft  = i * 2 + 1;
         int idxright = i * 2 + 2;
